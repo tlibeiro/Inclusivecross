@@ -1,0 +1,38 @@
+ROOTCONFIG   := root-config
+
+ARCH         := $(shell $(ROOTCONFIG) --arch)
+PLATFORM     := $(shell $(ROOTCONFIG) --platform)
+
+CXX          :=  g++
+
+ROOTCFLAGS   := $(shell $(ROOTCONFIG) --cflags)
+ROOTLDFLAGS  := $(shell $(ROOTCONFIG) --ldflags)
+ROOTLIBS     := $(shell $(ROOTCONFIG) --libs)
+ROOTGLIBS    := $(shell $(ROOTCONFIG) --glibs)
+HASTHREAD    := $(shell $(ROOTCONFIG) --has-thread)
+
+LDFLAGS      += $(ROOTLDFLAGS)
+
+LIBS = $(ROOTLIBS)  -L$(RKLIBS) -L/usr/lib64  -lgfortran -L../../../../lib/slc5_amd64_gcc462/ -lCondFormatsJetMETObjects 
+
+MYINCLUDEFLAGS = -I$(RKLIBS)/../include  -I../../../ -I/uscms_data/d3/tlibeiro/Boost/include
+CXXFLAGS = -Wall -g $(ROOTCFLAGS) $(MYINCLUDEFLAGS)
+LINKFLAGS = -g $(LIBS)
+
+
+all:  jesUnc.o runjesunc runjesunc8
+
+jesUnc.o:  jesUnc.cc jesUnc.h JetTreeAK7.h  AnalyzerProcedures.h
+									$(CXX) $(CXXFLAGS) -MD -c jesUnc.cc
+
+jesUnc8tev.o:  jesUnc8tev.cc  AnalyzerProcedures.h
+									$(CXX) $(CXXFLAGS) -MD -c jesUnc8tev.cc
+
+runjesunc: jesUnc.o JetTreeAK7.o 
+	$(CXX) -o $@ jesUnc.o JetTreeAK7.o  $(LINKFLAGS) 
+
+runjesunc8: jesUnc8tev.o  
+	$(CXX) -o $@ jesUnc8tev.o  $(LINKFLAGS) 
+clean:
+	rm -f *~ runjesunc JetTreeAK7.o JetTreeAK7.d jesUnc.d jesUnc.o jesUnc8tev.o
+

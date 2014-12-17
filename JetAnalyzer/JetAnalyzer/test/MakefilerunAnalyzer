@@ -1,0 +1,35 @@
+ROOTCONFIG   := root-config
+
+ARCH         := $(shell $(ROOTCONFIG) --arch)
+PLATFORM     := $(shell $(ROOTCONFIG) --platform)
+
+CXX          :=  g++
+
+ROOTCFLAGS   := $(shell $(ROOTCONFIG) --cflags)
+ROOTLDFLAGS  := $(shell $(ROOTCONFIG) --ldflags)
+ROOTLIBS     := $(shell $(ROOTCONFIG) --libs)
+ROOTGLIBS    := $(shell $(ROOTCONFIG) --glibs)
+HASTHREAD    := $(shell $(ROOTCONFIG) --has-thread)
+
+LDFLAGS      += $(ROOTLDFLAGS)
+
+LIBS = $(ROOTLIBS)  -L$(RKLIBS) -L/usr/lib64  -lgfortran 
+
+MYINCLUDEFLAGS = -I$(RKLIBS)/../include  
+CXXFLAGS = -Wall -g $(ROOTCFLAGS) $(MYINCLUDEFLAGS)
+LINKFLAGS = -g $(LIBS)
+
+%.o : %.cc
+	$(CXX) $(CXXFLAGS) -MD -c $<
+	@sed -i 's,\($*\.o\)[:]*\(.*\),$@: $$\(wildcard\2\)\n\1:\2,g' $*.d
+
+all:  runAnalyzer 
+
+runJetAnalyzer.o: JetTree8TeV.h hltanalysisHltTree.h ak5PFJetAnalyzert.h anaMETmetTree.h  skimanalysisHltTree.h stability.cc  runJetAnalyzer.h runJetAnalyzer.cc AnalyzerProcedures.h JetTreeAK5.h JetTreeAK7.h
+									$(CXX) $(CXXFLAGS) -MD -c runJetAnalyzer.cc
+runAnalyzer: runJetAnalyzer.o JetTree8TeV.o hltanalysisHltTree.o ak5PFJetAnalyzert.o anaMETmetTree.o main_runAnalyzer.o skimanalysisHltTree.o JetTreeAK5.o JetTreeAK7.o
+	$(CXX) -o $@ runJetAnalyzer.o JetTree8TeV.o hltanalysisHltTree.o ak5PFJetAnalyzert.o anaMETmetTree.o main_runAnalyzer.o skimanalysisHltTree.o JetTreeAK5.o JetTreeAK7.o $(LINKFLAGS) 
+
+clean:
+	rm -f *~ runAnalyzer ak5PFJetAnalyzert.o main_runAnalyzer.o runAnalyzer.d main_runAnalyzer.d JetTree8TeV.o anaMETmetTree.o hltanalysisHltTree.o runJetAnalyzer.o runJetAnalyzer.d ak5PFJetAnalyzert.d JetTree8TeV.d hltanalysisHltTree.d skimanalysisHltTree.o skimanalysisHltTree.d JetTreeAK5.o JetTreeAK7.o JetTreeAK5.d JetTreeAK7.d
+

@@ -1,0 +1,54 @@
+ROOTCONFIG   := root-config
+
+ARCH         := $(shell $(ROOTCONFIG) --arch)
+PLATFORM     := $(shell $(ROOTCONFIG) --platform)
+
+CXX          :=  g++
+
+ROOTCFLAGS   := $(shell $(ROOTCONFIG) --cflags)
+ROOTLDFLAGS  := $(shell $(ROOTCONFIG) --ldflags)
+ROOTLIBS     := $(shell $(ROOTCONFIG) --libs)
+ROOTGLIBS    := $(shell $(ROOTCONFIG) --glibs)
+HASTHREAD    := $(shell $(ROOTCONFIG) --has-thread)
+
+LDFLAGS      += $(ROOTLDFLAGS)
+
+LIBS = $(ROOTLIBS)  -L$(RKLIBS) -L/usr/lib64  -lgfortran 
+
+MYINCLUDEFLAGS = -I$(RKLIBS)/../include  
+CXXFLAGS = -Wall -g $(ROOTCFLAGS) $(MYINCLUDEFLAGS)
+LINKFLAGS = -g $(LIBS)
+
+%.o : %.cc
+	$(CXX) $(CXXFLAGS) -MD -c $<
+	@sed -i 's,\($*\.o\)[:]*\(.*\),$@: $$\(wildcard\2\)\n\1:\2,g' $*.d
+
+all:  VplusGTreeAnalyzer VerifyLHEEventClass VplusGTreeAnalyzer_fftjetTest readMCFMEvt readMCFMEvt_multiac
+
+VplusGTreeAnalyzer: VplusGTreeAnalyzer.o main_VplusGTreeAnalyzer.o 
+	$(CXX) -o $@ VplusGTreeAnalyzer.o main_VplusGTreeAnalyzer.o  $(LINKFLAGS) 
+VerifyLHEEventClass: VerifyLHEEventClass.o main_VerifyLHEEventClass.o 
+	$(CXX) -o $@ VerifyLHEEventClass.o main_VerifyLHEEventClass.o  $(LINKFLAGS) 
+VplusGTreeAnalyzer_fftjetTest: VplusGTreeAnalyzer_fftjetTest.o main_VplusGTreeAnalyzer_fftjetTest.o 
+	$(CXX) -o $@ VplusGTreeAnalyzer_fftjetTest.o main_VplusGTreeAnalyzer_fftjetTest.o  $(LINKFLAGS) 
+readMCFMEvt: readMCFMEvt.o 
+	$(CXX) -o $@ readMCFMEvt.o $(LINKFLAGS) 
+readMCFMEvt_multiac: readMCFMEvt_multiac.o 
+	$(CXX) -o $@ readMCFMEvt_multiac.o $(LINKFLAGS) 
+
+
+clean:
+	rm -f *~ VplusGTreeAnalyzer_fftjetTest VplusGTreeAnalyzer_fftjetTest.o main_VplusGTreeAnalyzer_fftjetTest.o VplusGTreeAnalyzer_fftjetTest.d main_VplusGTreeAnalyzer_fftjetTest.d
+	rm -f *~ VplusGTreeAnalyzer VplusGTreeAnalyzer.o main_VplusGTreeAnalyzer.o VplusGTreeAnalyzer.d main_VplusGTreeAnalyzer.d
+	rm -f *~ readMCFMEvt readMCFMEvt.o readMCFMEvt.d
+	rm -f *~ readMCFMEvt_multiac readMCFMEvt_multiac.o readMCFMEvt_multiac.d
+	rm -f *~ VerifyLHEEventClass VerifyLHEEventClass.o main_VerifyLHEEventClass.o VerifyLHEEventClass.d main_VerifyLHEEventClass.d
+
+-include readMCFMEvt.d
+-include readMCFMEvt_multiac.d
+-include VplusGTreeAnalyzer.d
+-include main_VplusGTreeAnalyzer.d
+-include VerifyLHEEventClass.d
+-include main_VerifyLHEEventClass.d
+-include VplusGTreeAnalyzer_fftjetTest.d
+-include main_VplusGTreeAnalyzer_fftjetTest.d
